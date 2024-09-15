@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Европа Плюс - Онлайн Радио</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(45deg, #1a1a3a, #2a2a4a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+        .player-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .control-btn {
+            background: #e94560;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin: 5px;
+        }
+        .control-btn:hover {
+            background: #d63551;
+        }
+        .slider-container {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .slider:hover {
+            opacity: 1;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #e94560;
+            cursor: pointer;
+        }
+        .slider::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #e94560;
+            cursor: pointer;
+        }
+        .info-container {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .additional-controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        #nowPlaying {
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+        }
+        #volumeDisplay {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <h1>Европа Плюс - Онлайн Радио</h1>
+        <audio id="audioPlayer" src="https://ep256.hostingradio.ru:8052/europaplus256.mp3"></audio>
+        <div style="text-align: center;">
+            <button id="playPauseBtn" class="control-btn">▶</button>
+            <button id="rewindBtn" class="control-btn">⏪10с</button>
+            <button id="forwardBtn" class="control-btn">10с⏩</button>
+            <button id="liveBtn" class="control-btn">🔴 Прямой эфир</button>
+        </div>
+        <div class="slider-container">
+            <span>🔈</span>
+            <input type="range" id="volumeSlider" class="slider" min="0" max="1" step="0.01" value="1">
+            <span>🔊</span>
+        </div>
+        <div id="volumeDisplay">Громкость: 100%</div>
+        <div class="info-container">
+            <div id="listeningTime">Время прослушивания: 00:00:00</div>
+            <div id="moscowTime">Московское время: --:--:--</div>
+        </div>
+        <div class="additional-controls">
+            <button id="favoriteBtn" class="control-btn">❤ В избранное</button>
+            <button id="shareBtn" class="control-btn">🔗 Поделиться</button>
+            <button id="recordBtn" class="control-btn">🎙 Запись</button>
+            <button id="nightModeBtn" class="control-btn">🌙 Ночной режим</button>
+        </div>
+        <div id="nowPlaying">Загрузка информации о треке...</div>
+    </div>
+
+    <script>
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const rewindBtn = document.getElementById('rewindBtn');
+        const forwardBtn = document.getElementById('forwardBtn');
+        const liveBtn = document.getElementById('liveBtn');
+        const listeningTimeDisplay = document.getElementById('listeningTime');
+        const moscowTimeDisplay = document.getElementById('moscowTime');
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const nightModeBtn = document.getElementById('nightModeBtn');
+        const nowPlayingDisplay = document.getElementById('nowPlaying');
+        const volumeDisplay = document.getElementById('volumeDisplay');
+
+        let startTime;
+        let listeningInterval;
+        let isRecording = false;
+        let isNightMode = false;
+
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        volumeSlider.addEventListener('input', adjustVolume);
+        rewindBtn.addEventListener('click', () => seekAudio(-10));
+        forwardBtn.addEventListener('click', () => seekAudio(10));
+        liveBtn.addEventListener('click', returnToLive);
+        favoriteBtn.addEventListener('click', addToFavorites);
+        shareBtn.addEventListener('click', shareStation);
+        recordBtn.addEventListener('click', toggleRecording);
+        nightModeBtn.addEventListener('click', toggleNightMode);
+
+        function togglePlayPause() {
+            if (audioPlayer.paused) {
+                audioPlayer.play().catch(e => console.error("Ошибка воспроизведения:", e));
+                playPauseBtn.textContent = '⏸';
+                startListeningTime();
+            } else {
+                audioPlayer.pause();
+                playPauseBtn.textContent = '▶';
+                clearInterval(listeningInterval);
+            }
+        }
+
+        function adjustVolume(e) {
+            const volume = parseFloat(e.target.value);
+            audioPlayer.volume = volume;
+            const volumePercentage = Math.round(volume * 100);
+            volumeDisplay.textContent = `Громкость: ${volumePercentage}%`;
+        }
+
+        function seekAudio(seconds) {
+            audioPlayer.currentTime += seconds;
+        }
+
+        function returnToLive() {
+            audioPlayer.src = audioPlayer.src;
+            audioPlayer.play().catch(e => console.error("Ошибка воспроизведения:", e));
+            playPauseBtn.textContent = '⏸';
+            startListeningTime();
+        }
+
+        function startListeningTime() {
+            startTime = new Date();
+            updateListeningTime();
+            listeningInterval = setInterval(updateListeningTime, 1000);
+        }
+
+        function updateListeningTime() {
+            const now = new Date();
+            const diff = now - startTime;
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            listeningTimeDisplay.textContent = `Время прослушивания: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function updateMoscowTime() {
+            const now = new Date();
+            const moscowTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
+            moscowTimeDisplay.textContent = `Московское время: ${moscowTime.toLocaleTimeString('ru-RU')}`;
+        }
+
+        setInterval(updateMoscowTime, 1000);
+
+        function addToFavorites() {
+            alert('Радиостанция добавлена в избранное!');
+        }
+
+        function shareStation() {
+            alert('Ссылка на радиостанцию скопирована в буфер обмена!');
+        }
+
+        function toggleRecording() {
+            isRecording = !isRecording;
+            if (isRecording) {
+                recordBtn.textContent = '⏹ Стоп';
+                alert('Запись начата');
+            } else {
+                recordBtn.textContent = '🎙 Запись';
+                alert('Запись остановлена');
+            }
+        }
+
+        function toggleNightMode() {
+            isNightMode = !isNightMode;
+            document.body.style.filter = isNightMode ? 'invert(1) hue-rotate(180deg)' : 'none';
+            nightModeBtn.textContent = isNightMode ? '☀ Дневной режим' : '🌙 Ночной режим';
+        }
+
+        function updateNowPlaying() {
+            fetch('https://europaplus.ru/api/v1/track/info?media_id=1')
+                .then(response => response.json())
+                .then(data => {
+                    const track = data.track;
+                    nowPlayingDisplay.textContent = `Сейчас играет: ${track.artist} - ${track.title}`;
+                })
+                .catch(error => {
+                    console.error('Ошибка при получении информации о треке:', error);
+                    nowPlayingDisplay.textContent = 'Не удалось загрузить информацию о треке';
+                });
+        }
+
+        setInterval(updateNowPlaying, 30000);
+        updateNowPlaying();
+
+        // Инициализация
+        updateMoscowTime();
+    </script>
+</body>
+</html>
