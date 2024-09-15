@@ -3,33 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Европа Плюс - Онлайн Радио</title>
+    <title>Европа Плюс - Супер Продвинутый Онлайн Радио Плеер</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
             font-family: 'Roboto', sans-serif;
-            transition: all 0.3s ease;
-        }
-        body.day-mode {
-            background: linear-gradient(45deg, #e0e0e0, #f5f5f5);
-            color: #333;
-        }
-        body.night-mode {
             background: linear-gradient(45deg, #1a1a3a, #2a2a4a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
             color: #fff;
         }
-        #particles-js {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
         .player-container {
-            position: relative;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 30px;
@@ -38,11 +27,6 @@
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
-            margin: 50px auto;
-        }
-        .day-mode .player-container {
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
         }
         h1 {
             text-align: center;
@@ -121,8 +105,7 @@
         }
     </style>
 </head>
-<body class="night-mode">
-    <div id="particles-js"></div>
+<body>
     <div class="player-container">
         <h1>Европа Плюс - Онлайн Радио</h1>
         <audio id="audioPlayer" src="https://ep256.hostingradio.ru:8052/europaplus256.mp3"></audio>
@@ -152,113 +135,6 @@
     </div>
 
     <script>
-        // Инициализация particles.js
-        particlesJS("particles-js", {
-            "particles": {
-                "number": {
-                    "value": 80,
-                    "density": {
-                        "enable": true,
-                        "value_area": 800
-                    }
-                },
-                "color": {
-                    "value": "#ffffff"
-                },
-                "shape": {
-                    "type": "circle",
-                    "stroke": {
-                        "width": 0,
-                        "color": "#000000"
-                    },
-                    "polygon": {
-                        "nb_sides": 5
-                    }
-                },
-                "opacity": {
-                    "value": 0.5,
-                    "random": false,
-                    "anim": {
-                        "enable": false,
-                        "speed": 1,
-                        "opacity_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "size": {
-                    "value": 3,
-                    "random": true,
-                    "anim": {
-                        "enable": false,
-                        "speed": 40,
-                        "size_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "line_linked": {
-                    "enable": true,
-                    "distance": 150,
-                    "color": "#ffffff",
-                    "opacity": 0.4,
-                    "width": 1
-                },
-                "move": {
-                    "enable": true,
-                    "speed": 6,
-                    "direction": "none",
-                    "random": false,
-                    "straight": false,
-                    "out_mode": "out",
-                    "bounce": false,
-                    "attract": {
-                        "enable": false,
-                        "rotateX": 600,
-                        "rotateY": 1200
-                    }
-                }
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": {
-                    "onhover": {
-                        "enable": true,
-                        "mode": "repulse"
-                    },
-                    "onclick": {
-                        "enable": true,
-                        "mode": "push"
-                    },
-                    "resize": true
-                },
-                "modes": {
-                    "grab": {
-                        "distance": 400,
-                        "line_linked": {
-                            "opacity": 1
-                        }
-                    },
-                    "bubble": {
-                        "distance": 400,
-                        "size": 40,
-                        "duration": 2,
-                        "opacity": 8,
-                        "speed": 3
-                    },
-                    "repulse": {
-                        "distance": 200,
-                        "duration": 0.4
-                    },
-                    "push": {
-                        "particles_nb": 4
-                    },
-                    "remove": {
-                        "particles_nb": 2
-                    }
-                }
-            },
-            "retina_detect": true
-        });
-
         const audioPlayer = document.getElementById('audioPlayer');
         const playPauseBtn = document.getElementById('playPauseBtn');
         const volumeSlider = document.getElementById('volumeSlider');
@@ -277,7 +153,7 @@
         let startTime;
         let listeningInterval;
         let isRecording = false;
-        let isNightMode = true;
+        let isNightMode = false;
 
         playPauseBtn.addEventListener('click', togglePlayPause);
         volumeSlider.addEventListener('input', adjustVolume);
@@ -363,42 +239,34 @@
 
         function toggleNightMode() {
             isNightMode = !isNightMode;
-            document.body.classList.toggle('night-mode');
-            document.body.classList.toggle('day-mode');
+            document.body.style.filter = isNightMode ? 'invert(1) hue-rotate(180deg)' : 'none';
             nightModeBtn.textContent = isNightMode ? '☀ Дневной режим' : '🌙 Ночной режим';
-            
-            // Обновляем цвет частиц
-            if (isNightMode) {
-                pJSDom[0].pJS.particles.color.value = "#ffffff";
-                pJSDom[0].pJS.particles.line_linked.color = "#ffffff";
-            } else {
-                pJSDom[0].pJS.particles.color.value = "#333333";
-                pJSDom[0].pJS.particles.line_linked.color = "#333333";
-            }
-            pJSDom[0].pJS.fn.particlesRefresh();
         }
 
         function updateNowPlaying() {
-    fetch('https://europaplus.ru/api/v1/track/info?media_id=1')
-        .then(response => response.json())
-        .then(data => {
-            const track = data.track;
-            if (track && track.artist && track.title) {
-                nowPlayingDisplay.textContent = `Сейчас играет: ${track.artist} - ${track.title}`;
-            } else {
-                nowPlayingDisplay.textContent = 'Информация о треке недоступна';
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка при получении информации о треке:', error);
-            nowPlayingDisplay.textContent = 'Не удалось загрузить информацию о треке';
-        });
-}
+            fetch('https://europaplus.ru/api/v1/track/info?media_id=1')
+                .then(response => response.json())
+                .then(data => {
+                    const track = data.track;
+                    if (track && track.artist && track.title) {
+                        nowPlayingDisplay.textContent = `Сейчас играет: ${track.artist} - ${track.title}`;
+                    } else {
+                        nowPlayingDisplay.textContent = 'Информация о треке недоступна';
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при получении информации о треке:', error);
+                    nowPlayingDisplay.textContent = 'Не удалось загрузить информацию о треке';
+                });
+        }
 
-// Обновляем информацию о треке каждые 30 секунд
-setInterval(updateNowPlaying, 30000);
-// Вызываем сразу при загрузке страницы
-updateNowPlaying();
+        // Обновляем информацию о треке каждые 30 секунд
+        setInterval(updateNowPlaying, 30000);
+        // Вызываем сразу при загрузке страницы
+        updateNowPlaying();
 
-// ����ициализация
-updateMoscowTime();
+        // Инициализация
+        updateMoscowTime();
+    </script>
+</body>
+</html>
